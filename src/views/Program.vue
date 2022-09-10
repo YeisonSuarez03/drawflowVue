@@ -121,7 +121,7 @@ export default {
     // this.$df.reroute_fix_curvature = true;
     // this.$df.force_first_input = true; */
     this.$df.start();
-    this.$df.import(JSON.parse(this.getProgram?.program.program[0]?.drawflow));
+    this.$df.import(JSON.parse(this.getProgram?.program.program[0]?.drawflow)); 
     var elements = document.getElementsByClassName("drag-drawflow");
       for (var i = 0; i < elements.length; i++) {
         elements[i].addEventListener("touchend", this.drop, false);
