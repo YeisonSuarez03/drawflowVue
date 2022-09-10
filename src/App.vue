@@ -1,18 +1,26 @@
 <template>
-  <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <div id="app" style="width: 100%; height: 100%; margin: 0;">
+    <nav class="navbar navbar-expand navbar-light bg-light">
+      <div class="container-fluid">
+        <a class="navbar-brand mx-auto" v-if="getProgram?.program">{{ getProgram?.program.program[0]?.name}}</a>
+        <a class="navbar-brand mx-auto" v-else>Dashboard</a>
+      </div>
+      <div class="right" v-if="getProgram?.program">
+        <router-link to="/">Dashboard</router-link>
+      </div>
+    </nav>
+    <router-view></router-view>
   </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+  import { mapGetters } from 'vuex';
 
 export default {
   name: 'App',
-  components: {
-    HelloWorld
-  }
+  computed: {
+    ...mapGetters(["getProgram"])
+  },
 }
 </script>
 
