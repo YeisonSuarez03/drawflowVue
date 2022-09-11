@@ -4,8 +4,9 @@ import Antd from 'ant-design-vue'
 import App from './App.vue'
 import Dashboard from './views/Dashboard.vue'
 import Program from './views/Program.vue'
-import 'ant-design-vue/dist/antd.css';
 import store from './store'
+import 'ant-design-vue/dist/antd.css';
+import './helpers/notificationCustomStyle.css';
 
  
 

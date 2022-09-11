@@ -2,11 +2,12 @@
   <div id="app" style="width: 100%; height: 100%; margin: 0;">
     <nav class="navbar navbar-expand navbar-light bg-light">
       <div class="container-fluid">
-        <a class="navbar-brand mx-auto" v-if="getProgram?.program">{{ getProgram?.program.program[0]?.name}}</a>
-        <a class="navbar-brand mx-auto" v-else>Dashboard</a>
+        <a class="navbar-brand mx-auto" v-if="getProgramInfo?.program">{{!getProgramInfo?.loading ? getProgramInfo?.program?.program[0]?.name : "Loading..."}}</a>
+        <a class="navbar-brand mx-auto" v-else-if="$route.path === '/'">Dashboard</a>
+        <a class="navbar-brand mx-auto" v-else>Loading...</a>
       </div>
-      <div class="right" v-if="getProgram?.program">
-        <router-link to="/">Dashboard</router-link>
+      <div class="right px-2" v-if="getProgramInfo?.program">
+        <router-link to="/"><a-icon type="logout" /></router-link>
       </div>
     </nav>
     <router-view></router-view>
@@ -14,12 +15,26 @@
 </template>
 
 <script>
-  import { mapGetters } from 'vuex';
+  import { mapGetters, mapActions } from 'vuex';
 
 export default {
   name: 'App',
   computed: {
-    ...mapGetters(["getProgram"])
+    ...mapGetters(["getProgramInfo"])
+  },
+  methods: {
+    ...mapActions(["clearProgram"])
+  },
+  watch: {
+    $route: {
+      deep: true,
+      handler(to, from) {
+        console.log(to, from);
+        if (to.path === "/") {
+          this.clearProgram()
+        }
+      },
+    },
   },
 }
 </script>
@@ -29,7 +44,6 @@ export default {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-align: center;
   color: #2c3e50;
   margin-top: 60px;
 }

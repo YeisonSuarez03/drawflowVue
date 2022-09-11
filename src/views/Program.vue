@@ -1,5 +1,6 @@
 <template>
   <div class="drawflow-container">
+    <a-spin tip="Loading..." :spinning="getProgramInfo?.loading || getResults?.loading" style="width: 100%; height: 100vh;">
     <div class="wrapper">
       <aside>
         <ul class="list-group">
@@ -77,7 +78,26 @@
       </aside>
       <main>
         <div class="drawflow-actions">
-          <button @click="exportData" class="btn btn-danger">Exportar</button>
+          <button @click="exportData" class="btn btn-success">Save</button>
+        </div>
+        <div class="drawflow-code">
+          <div>
+          <a-spin tip="Loading..." :spinning="getCodeResults?.loading">
+          <div>
+            <h6>Python Code:</h6>
+            <pre class="ps-3 pt-2"><code>{{getCode}}</code></pre>
+            <div class="d-flex flex-column">
+              <div>
+                <button @click="handleGenerateCode" class="btn btn-primary me-2" style="max-width: 150px;">Generate code</button>
+                <button @click="handleExecuteCode" class="btn btn-danger" style="max-width: 150px;">Execute</button>
+              </div>
+              <strong class="mt-2">Output: </strong>
+              <p>{{JSON.stringify(getCodeResults?.result?.data, null, 2)}}</p>
+            </div>
+          </div>
+        </a-spin>
+      </div>
+
         </div>
         <div
           id="drawflow"
@@ -86,6 +106,7 @@
         ></div>
       </main>
     </div>
+  </a-spin>
   </div>
 </template>
 
@@ -93,7 +114,7 @@
 import Drawflow from "drawflow";
 import Vue from 'vue';
 import { mapActions, mapGetters } from 'vuex';
-
+import { responseNotification } from "../helpers/responseNotification";
 
 export default {
   name: "ProgramView",
@@ -104,13 +125,14 @@ export default {
       isMounted: false,
     };
   },
-  watch: {
-    getProgram(v){
-      console.log(v)
-    }
-  },
   computed: {
-    ...mapGetters(["getProgram"])
+    ...mapGetters(["getProgramInfo", "getResults", "getCode", "getCodeResults"])
+  },
+  watch: {
+    getResults(v){
+      console.log(v);
+      !v?.loading && responseNotification(v?.result, "The program has been saved succesfully!")
+    }
   },
   async mounted() {
     this.isMounted = true
@@ -121,7 +143,7 @@ export default {
     // this.$df.reroute_fix_curvature = true;
     // this.$df.force_first_input = true; */
     this.$df.start();
-    this.$df.import(JSON.parse(this.getProgram?.program.program[0]?.drawflow)); 
+    this.$df.import(JSON.parse(this.getProgramInfo?.program.program[0]?.drawflow)); 
     var elements = document.getElementsByClassName("drag-drawflow");
       for (var i = 0; i < elements.length; i++) {
         elements[i].addEventListener("touchend", this.drop, false);
@@ -130,13 +152,22 @@ export default {
       }
   },
   methods: {
-      ...mapActions(["getProgramById", "updateProgram"]),
+      ...mapActions(["getProgramById", "updateProgram", "executeCode", "changeCode"]),
       exportData(){
         let exportdata = {
-          uid: this.getProgram?.program.program[0]?.uid,
+          uid: window.location.href.split("/").at(-1),
           drawflow: JSON.stringify(this.$df.export())
         };
         this.updateProgram(exportdata)
+      },
+      handleExecuteCode(){
+        this.executeCode(this.getCode)
+      },
+      handleGenerateCode(){
+        let data = JSON.stringify(this.$df.export())
+        console.log(data);
+        let code = "x=1\ny=2\nprint(x+y)"
+        this.changeCode(code)
       },
       positionMobile(ev){
         this.mobile_last_move = ev;
@@ -310,7 +341,7 @@ export default {
 #drawflow {
   position: relative;
     width: calc(100vw - 201px);
-    height: calc(100% - 50px);
+    height: calc(100%);
     top: 0px;
     background: var(--background-color);
     background-size: 25px 25px;
@@ -318,8 +349,8 @@ export default {
 }
 
 .drawflow-container {
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
 }
 .drag-drawflow {
@@ -417,7 +448,44 @@ main {
 .drawflow-actions{
   position: absolute;
   right: 5%;
-  bottom: 5%;
+  top: 5%;
   z-index: 10;
 }
+
+.drawflow-code{
+  position: absolute;
+    right: 5%;
+    bottom: 5%;
+    z-index: 10;
+    width: 100%;
+    max-width: 300px;
+    min-width: 200px;
+    height: 100%;
+    max-height: 300px;
+    min-height: 250px;
+}
+.drawflow-code > div:first-child{
+  background-color: #FFF;
+  padding: 1rem;
+  border: 1px solid #AAAAAA70;
+  box-shadow: 0 0 20px 5px #aaaaaa70;
+  border-radius: 15px;
+  width: 100%;
+  height: 100%;
+}
+.drawflow-code pre{
+  overflow-y: scroll;
+  height: 100%;
+  min-height: 100px;
+  max-height: 150px;
+  background: #333;
+  color: #F7F7F7;
+}
+
+/* .drawflow .connection {
+    position: initial;
+}
+.drawflow svg {
+    position: initial;
+} */
 </style>

@@ -11,8 +11,8 @@ const state = {
 }
 const getters = {
     getPrograms: (state) => ({loading: state.loadingPrograms, programs: state.programs}),
-    getProgram: (state) => ({loading: state.loadingProgramById, program: state.programById}),
-    getResult: (state) => state.result,
+    getProgramInfo: (state) => ({loading: state.loadingProgramById, program: state.programById}),
+    getResults: (state) => ({loading: state.loadingResult, result: state.result}),
 }
 const actions = { 
     createProgram: async({commit}, data) => {
@@ -23,6 +23,7 @@ const actions = {
             commit("setNewProgram", response)
         } catch (error) {
             console.log(error)
+            commit("setNewProgram", null)
         }
     },
     updateProgram: async({commit}, data) => {
@@ -33,6 +34,7 @@ const actions = {
             commit("setNewProgram", response)
         } catch (error) {
             console.log(error)
+            commit("setNewProgram", null)
         }
     },
     getProgramById: async({commit}, id) => {
@@ -42,6 +44,7 @@ const actions = {
             commit("setProgramById", response);
         } catch (error) {
             console.log(error)
+            commit("setProgramById", null)
         }
     },
     getAllPrograms: async({commit}) => {
@@ -51,8 +54,12 @@ const actions = {
             commit("setPrograms", response?.programs);
         } catch (error) {
             console.log(error)
+            commit("setPrograms", null)
         }
     },
+    clearProgram: ({commit}) => {
+        commit("clearProgramById")
+    }
 
 }
 
@@ -73,7 +80,10 @@ const mutations = {
         state.loadingProgramById = false;
         state.programById = program;
     },
-
+    clearProgramById: (state) => {
+        state.loadingProgramById = false;
+        state.programById = null;
+    },
     setBeforePrograms: (state) => {
         state.loadingPrograms = true;
         state.programs = null;

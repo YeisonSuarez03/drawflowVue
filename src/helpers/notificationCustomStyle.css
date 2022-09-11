@@ -1,0 +1,15 @@
+.ant-notification-notice.ant-notification-notice-closable.custom-notification__success {
+    background: #41ba13;
+    box-shadow: 0 0 15px 5px #41ba1355;
+}
+
+.ant-notification-notice.ant-notification-notice-closable.custom-notification__error {
+    background: #ba2c13;
+    box-shadow: 0 0 15px 5px #ba291355;
+}
+
+.ant-notification-notice.ant-notification-notice-closable .ant-notification-notice-message,
+.ant-notification-notice.ant-notification-notice-closable .ant-notification-notice-description,
+.ant-notification-notice.ant-notification-notice-closable .anticon{
+    color: #fff;
+}
