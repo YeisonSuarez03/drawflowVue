@@ -92,7 +92,7 @@
                 <button @click="handleExecuteCode" class="btn btn-danger" style="max-width: 150px;">Execute</button>
               </div>
               <strong class="mt-2">Output: </strong>
-              <p>{{JSON.stringify(getCodeResults?.result?.data, null, 2)}}</p>
+              <pre><code>{{getCodeResults?.result}}</code></pre> 
             </div>
           </div>
         </a-spin>
@@ -111,10 +111,14 @@
 </template>
 
 <script>
+import { generateCodeByNodeName } from "@/helpers/generateCodeByNodeName";
+import { createStartAndEndNodes, deleteAllConnectedNodes } from "@/helpers/createOrDeleteStartEndNodes";
 import Drawflow from "drawflow";
 import Vue from 'vue';
 import { mapActions, mapGetters } from 'vuex';
 import { responseNotification } from "../helpers/responseNotification";
+
+
 
 export default {
   name: "ProgramView",
@@ -123,6 +127,8 @@ export default {
       mobile_item_selec: "",
       mobile_last_move: null,
       isMounted: false,
+      lastNodeSelected: null,
+      nodesParsedToCode: []
     };
   },
   computed: {
@@ -143,16 +149,60 @@ export default {
     // this.$df.reroute_fix_curvature = true;
     // this.$df.force_first_input = true; */
     this.$df.start();
-    this.$df.import(JSON.parse(this.getProgramInfo?.program.program[0]?.drawflow)); 
+    this.getProgramInfo?.program && this.$df.import(JSON.parse(this.getProgramInfo?.program.program[0]?.drawflow)); 
     var elements = document.getElementsByClassName("drag-drawflow");
       for (var i = 0; i < elements.length; i++) {
         elements[i].addEventListener("touchend", this.drop, false);
         elements[i].addEventListener("touchmove", this.positionMobile, false);
         elements[i].addEventListener("touchstart", this.drag, false);
       }
+
+      //node created event listener
+    this.$df.on('nodeCreated', (id) => {
+      let node = this.$df.getNodeFromId(id)
+      console.log(node);
+      if (node?.name === "if-else" || node?.name === "for-loop") {
+        console.log("creamos nodo if-else");
+        createStartAndEndNodes(this.$df, node)
+        node?.name === "if-else" && setTimeout(() => {
+            createStartAndEndNodes(this.$df, node, false)
+        }, 100);
+      }else if(node?.name === "start"){
+        const {id_output, output_class, input_class} = node.data
+        this.$df.addConnection(id_output, id, output_class, input_class)	
+      }else if(node?.name === "end"){
+        const {output_class, input_class} = node.data
+        let lastStartNodeId = this.$df.getNodesFromName("start")
+        .map(nodeId => this.$df.getNodeFromId(nodeId))
+        .sort((a,b) => b.data.time - a.data.time )[0].id
+        console.log("getNodesFromName: ", lastStartNodeId);
+        this.$df.addConnection(lastStartNodeId, id, output_class, input_class)	
+      }
+    })
+
+    //node removed event listener
+    this.$df.on("nodeRemoved", async(id) => {
+      console.log(typeof id);
+      let node = this.lastNodeSelected
+      if (node?.name === "if-else" || node?.name === "for-loop") {
+        console.log("removimos if-else");
+        await deleteAllConnectedNodes(this.$df, node)
+      }
+    })
+
+    //nodeselected event listener
+    this.$df.on("nodeSelected", (id) => {
+      this.lastNodeSelected = this.$df.getNodeFromId(id)
+    })
   },
   methods: {
       ...mapActions(["getProgramById", "updateProgram", "executeCode", "changeCode"]),
+      changeNodesParsedToCode(id){
+        this.nodesParsedToCode.push(id)
+      },
+      clearNodesParsedToCode(){
+        this.nodesParsedToCode = []
+      },
       exportData(){
         let exportdata = {
           uid: window.location.href.split("/").at(-1),
@@ -164,9 +214,15 @@ export default {
         this.executeCode(this.getCode)
       },
       handleGenerateCode(){
-        let data = JSON.stringify(this.$df.export())
+        this.clearNodesParsedToCode();
+        let data = this.$df.export()
         console.log(data);
-        let code = "x=1\ny=2\nprint(x+y)"
+        let code = ""
+        let nodes = Object.values(data.drawflow.Home.data).sort((a, b) => a.pos_x - b.pos_x)
+        nodes.filter(v => v.name !== "math-operation").forEach(node => {
+          console.log(node);
+          code += generateCodeByNodeName(node, nodes, this.nodesParsedToCode, this.changeNodesParsedToCode)
+        })
         this.changeCode(code)
       },
       positionMobile(ev){
@@ -261,7 +317,7 @@ export default {
             </div>
           </div>
           `;
-          data = {operation: null}
+          data = {operation: "add"}
           inputs = 2;
           outputs = 1
             break;
@@ -297,8 +353,8 @@ export default {
             </div>
           </div>
           `;
-            data = {operator: null}
-            inputs = 1;
+            data = {operator: "equals"}
+            inputs = 2;
             outputs = 2;
             break;
           case "for-loop":
@@ -460,8 +516,6 @@ main {
     width: 100%;
     max-width: 300px;
     min-width: 200px;
-    height: 100%;
-    max-height: 300px;
     min-height: 250px;
 }
 .drawflow-code > div:first-child{

@@ -16,10 +16,10 @@ const actions = {
         try {
             commit("setBeforeExecuteCode")
             const response = await drawflow.executeCode(data);
-            commit("setExecutedCode", response)
+            commit("setExecutedCode", JSON.stringify(response.data, null, 2))
         } catch (error) {
             console.log(error)
-            commit("setExecutedCode", null)
+            commit("setExecutedCode", {error: error.response.data.description.slice(172)})
         }
     },
     changeCode: ({commit}, code) => {
