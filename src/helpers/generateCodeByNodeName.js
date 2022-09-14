@@ -78,10 +78,10 @@ const getBlockNodes = (connectionsArray, nodeList) => {
 }
 
 const getInputNodes = (node, nodeList) => {
-    let inputNodes = Object.values(node.inputs).map(({connections}) => {
+    let inputNodes = Object.values(node?.inputs).map(({connections}) => {
         console.log(connections);
-        let nodeConnected = nodeList.find(v => v.id == connections[0].node);
-        return nodeConnected.data.name
+        let nodeConnected = nodeList?.find(v => v.id == connections[0]?.node);
+        return nodeConnected?.data.name
     } );
 
     return inputNodes
@@ -90,7 +90,7 @@ const getInputNodes = (node, nodeList) => {
 const getIfElseCode = (node, nodeList, nodesParsedToCode, changeNodesParsedToCode) => {
     if (nodesParsedToCode.includes(node.id)) return "";
     const operators = {
-        "equals": "=",
+        "equals": "==",
         "different": "!=",
         "minor": "<",
         "minor-equal": "<=",
@@ -123,7 +123,7 @@ const getIfElseCode = (node, nodeList, nodesParsedToCode, changeNodesParsedToCod
 const getForLoopCode = (node, nodeList, nodesParsedToCode, changeNodesParsedToCode) => {
     if (nodesParsedToCode.includes(node.id)) return "";
     let inputNodes = getInputNodes(node, nodeList);
-    let code = `for i in range (${inputNodes?.length > 0 ? inputNodes[0] : node.data.times}): \n\t`
+    let code = `for i in range (${inputNodes?.length > 0 && inputNodes[0] !== undefined ? inputNodes[0] : node.data.times}): \n\t`
     let blockNodesFirstOutput = getBlockNodes(node.outputs.output_1.connections, nodeList)
     console.log(blockNodesFirstOutput);
     blockNodesFirstOutput.forEach(node => {

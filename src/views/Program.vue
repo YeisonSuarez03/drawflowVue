@@ -123,7 +123,7 @@ import { createStartAndEndNodes, deleteAllConnectedNodes } from "@/helpers/creat
 import Drawflow from "drawflow";
 import Vue from 'vue';
 import { mapActions, mapGetters } from 'vuex';
-import { responseNotification } from "../helpers/responseNotification";
+import { nodesWithErrorNotification, responseNotification } from "../helpers/responseNotification";
 
 
 
@@ -243,11 +243,39 @@ export default {
         console.log(data);
         let code = ""
         let nodes = Object.values(data.drawflow.Home.data).sort((a, b) => a.pos_x - b.pos_x)
-        nodes.filter(v => v.name !== "math-operation").forEach(node => {
-          console.log(node);
-          code += generateCodeByNodeName(node, nodes, this.nodesParsedToCode, this.changeNodesParsedToCode)
+        //VERIFIY NODES DATA BEFORE GENERATING CODE
+        let isValidCode = true;
+        nodes.forEach(node => {
+          if (((
+            node.name === "variable" ||
+            node.name === "assign" ||
+            node.name === "code-block" 
+            ) && (Object.values(node.data).includes(null) || Object.values(node.data).includes("")) )) {
+              nodesWithErrorNotification(node)
+              isValidCode = false;
+              return;
+          }else if(((
+            node.name === "if-else" ||
+            node.name === "math-operation"
+            ) && (Object.values(node.inputs).some(v => v.connections.length<=0) || Object.values(node.outputs).some(v => v.connections.length<=0)) )){
+              nodesWithErrorNotification(node)
+              isValidCode = false;
+              return;
+            }if(((
+            node.name === "for-loop"
+            ) && (Object.values(node.inputs).every(v => v.connections.length<=0) && (Object.values(node.data).includes(null) || Object.values(node.data).includes(""))) )){
+              nodesWithErrorNotification(node)
+              isValidCode = false;
+              return;
+            }
         })
-        this.changeCode(code)
+        if(isValidCode){
+          nodes.filter(v => v.name !== "math-operation").forEach(node => {
+            console.log(node);
+            code += generateCodeByNodeName(node, nodes, this.nodesParsedToCode, this.changeNodesParsedToCode)
+          })
+          this.changeCode(code)
+        } 
       },
       positionMobile(ev){
         this.mobile_last_move = ev;

@@ -18,3 +18,12 @@ export const responseNotification = (response, message) => {
         })
     }
 }
+
+export const nodesWithErrorNotification = (node) => {
+    notification.error({
+        message: "Invalid Nodes!",
+        description: `There are some nodes that don't have data yet, please verify them before executing the code. \n(error: node #${node.id} of type ${node.name} is missing data, inputs or outputs.)`,
+        class: "custom-notification__error",
+        duration: 6
+    })
+}
