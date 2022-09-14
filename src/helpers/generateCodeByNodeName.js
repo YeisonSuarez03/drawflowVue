@@ -48,11 +48,7 @@ const getMathOperationCode = (node, nodesParsedToCode, nodeList) => {
         "divide": "/",
     }
     console.log(node, nodeList);
-    let inputNodes = Object.values(node.inputs).map(({connections}) => {
-        console.log(connections);
-        let nodeConnected = nodeList.find(v => v.id == connections[0]?.node);
-        return nodeConnected?.data?.name
-    } );
+    let inputNodes = getInputNodes(node, nodeList);
     console.log(inputNodes);
     return inputNodes.join(operators[node.data.operation])
 
@@ -81,6 +77,16 @@ const getBlockNodes = (connectionsArray, nodeList) => {
 
 }
 
+const getInputNodes = (node, nodeList) => {
+    let inputNodes = Object.values(node.inputs).map(({connections}) => {
+        console.log(connections);
+        let nodeConnected = nodeList.find(v => v.id == connections[0].node);
+        return nodeConnected.data.name
+    } );
+
+    return inputNodes
+}
+
 const getIfElseCode = (node, nodeList, nodesParsedToCode, changeNodesParsedToCode) => {
     if (nodesParsedToCode.includes(node.id)) return "";
     const operators = {
@@ -91,11 +97,7 @@ const getIfElseCode = (node, nodeList, nodesParsedToCode, changeNodesParsedToCod
         "major": ">",
         "major-equal": ">=",
     }
-    let inputNodes = Object.values(node.inputs).map(({connections}) => {
-        console.log(connections);
-        let nodeConnected = nodeList.find(v => v.id == connections[0].node);
-        return nodeConnected.data.name
-    } );
+    let inputNodes = getInputNodes(node, nodeList);
     let code = `if ${inputNodes.join(operators[node.data.operator])} :\n`
     let blockNodesFirstOutput = getBlockNodes(node.outputs.output_1.connections, nodeList)
     console.log(blockNodesFirstOutput);
@@ -120,7 +122,8 @@ const getIfElseCode = (node, nodeList, nodesParsedToCode, changeNodesParsedToCod
 
 const getForLoopCode = (node, nodeList, nodesParsedToCode, changeNodesParsedToCode) => {
     if (nodesParsedToCode.includes(node.id)) return "";
-    let code = `for i in range (${node.data.times}): \n\t`
+    let inputNodes = getInputNodes(node, nodeList);
+    let code = `for i in range (${inputNodes?.length > 0 ? inputNodes[0] : node.data.times}): \n\t`
     let blockNodesFirstOutput = getBlockNodes(node.outputs.output_1.connections, nodeList)
     console.log(blockNodesFirstOutput);
     blockNodesFirstOutput.forEach(node => {

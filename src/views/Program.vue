@@ -84,15 +84,22 @@
           <div>
           <a-spin tip="Loading..." :spinning="getCodeResults?.loading">
           <div>
-            <h6>Python Code:</h6>
-            <pre class="ps-3 pt-2"><code>{{getCode}}</code></pre>
-            <div class="d-flex flex-column">
-              <div>
-                <button @click="handleGenerateCode" class="btn btn-primary me-2" style="max-width: 150px;">Generate code</button>
-                <button @click="handleExecuteCode" class="btn btn-danger" style="max-width: 150px;">Execute</button>
+            <div class="drawflow-code__title">
+              <h6>Python Code:</h6>
+              <div class="icon" @click="minimizeCodeWindow">
+                <a-icon type="down" />
               </div>
-              <strong class="mt-2">Output: </strong>
-              <pre><code>{{getCodeResults?.result}}</code></pre> 
+            </div>
+            <div class="drawflow-code__content">
+              <pre class="ps-3 pt-2"><code>{{getCode}}</code></pre>
+              <div class="d-flex flex-column">
+                <div>
+                  <button @click="handleGenerateCode" class="btn btn-primary me-2" style="max-width: 150px;">Generate code</button>
+                  <button @click="handleExecuteCode" class="btn btn-danger" style="max-width: 150px;">Execute</button>
+                </div>
+                <strong class="mt-2">Output: </strong>
+                <pre><code>{{getCodeResults?.result?.output || getCodeResults?.result?.error}}</code></pre> 
+              </div>
             </div>
           </div>
         </a-spin>
@@ -150,6 +157,8 @@ export default {
     // this.$df.force_first_input = true; */
     this.$df.start();
     this.getProgramInfo?.program && this.$df.import(JSON.parse(this.getProgramInfo?.program.program[0]?.drawflow)); 
+    //GENERAMOS CODIGO LUEGO DE IMPORTAR DATA
+    this.handleGenerateCode()
     var elements = document.getElementsByClassName("drag-drawflow");
       for (var i = 0; i < elements.length; i++) {
         elements[i].addEventListener("touchend", this.drop, false);
@@ -202,6 +211,21 @@ export default {
       },
       clearNodesParsedToCode(){
         this.nodesParsedToCode = []
+      },
+      minimizeCodeWindow(){
+        const codeParent = document.querySelector(".drawflow-code")
+        const icon = codeParent.querySelector(".icon")
+        if (codeParent.classList.contains("minimized")) {
+          codeParent.setAttribute("style", "min-height: initial; overflow: hidden;");
+          codeParent.firstElementChild.removeAttribute("style")
+          icon.setAttribute("style", "transform: rotate(0deg)")
+          codeParent.classList.remove("minimized");
+          return;
+        }
+        codeParent.classList.add("minimized");
+        codeParent.setAttribute("style", "min-height: initial; height: 50px; overflow: hidden;");
+        codeParent.firstElementChild.setAttribute("style", "box-shadow: initial;")
+        icon.setAttribute("style", "transform: rotate(180deg)")
       },
       exportData(){
         let exportdata = {
@@ -514,9 +538,12 @@ main {
     bottom: 5%;
     z-index: 10;
     width: 100%;
-    max-width: 300px;
+    height: 100%;
+    max-width: 350px;
     min-width: 200px;
     min-height: 250px;
+    max-height: 450px;
+    transition: all .5s ease-in-out;
 }
 .drawflow-code > div:first-child{
   background-color: #FFF;
@@ -535,7 +562,22 @@ main {
   background: #333;
   color: #F7F7F7;
 }
-
+.drawflow-code__title{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-right: 10px;
+  transition: all .3s ease-in-out;
+  margin-bottom: 7px;
+}
+.drawflow-code__title .icon{
+  cursor: pointer;
+  transition: all .3s ease-in-out;
+}
+.drawflow-code__title .icon:hover{
+  color: black;
+  transform: scale(1.1);
+}
 /* .drawflow .connection {
     position: initial;
 }
