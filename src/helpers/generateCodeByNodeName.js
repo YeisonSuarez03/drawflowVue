@@ -40,7 +40,7 @@ const getVariableCode = ({data, id}, nodesParsedToCode, isAssign) => {
 }
 
 const getMathOperationCode = (node, nodesParsedToCode, nodeList) => {
-    if (nodesParsedToCode.includes(node.id)) return "";
+    // if (nodesParsedToCode.includes(node.id)) return "";
     const operators = {
         "add": "+",
         "substract": "-",
@@ -74,7 +74,7 @@ const getBlockNodes = (connectionsArray, nodeList) => {
     (v.pos_x >= startNode.pos_x && v.pos_x <= endNode.pos_x) && 
     ((v.pos_y >= startNode.pos_y-200 && v.pos_y <= startNode.pos_y+200) || 
     (v.pos_y >= endNode.pos_y-200 && v.pos_y <= endNode.pos_y+200)))
-    return nodesFromRectangle.filter(v => v.name !== "math-operation")
+    return nodesFromRectangle.filter(v => v.name !== "math-operation" &&v.name !== "start"&&v.name !== "end")
 
 }
 
@@ -127,13 +127,13 @@ const getIfElseCode = (node, nodeList, nodesParsedToCode, changeNodesParsedToCod
 const getForLoopCode = (node, nodeList, nodesParsedToCode, changeNodesParsedToCode) => {
     if (nodesParsedToCode.includes(node.id)) return "";
     let inputNodes = getInputNodes(node, nodeList);
-    let code = `for i in range (${inputNodes?.length > 0 && inputNodes[0] !== undefined ? inputNodes[0] : node.data.times}):\n`
+    let code = `for i in range (${inputNodes?.length > 0 && inputNodes[0] !== undefined ? inputNodes[0] : node.data.times}):\n\t`
     let blockNodesFirstOutput = getBlockNodes(node.outputs.output_1.connections, nodeList)
     console.log(blockNodesFirstOutput);
     let idsParsed = []
-    blockNodesFirstOutput.forEach(node => {
-        const inputNodeCode = generateCodeByNodeName(node, nodesParsedToCode, nodeList, changeNodesParsedToCode, false); 
-        code += "\t" + inputNodeCode
+    blockNodesFirstOutput.forEach((node, i) => {
+        const inputNodeCode = generateCodeByNodeName(node, nodeList, nodesParsedToCode, changeNodesParsedToCode, false); 
+        code += `${i>0?"\t\t":"\t"}` + inputNodeCode
         // changeNodesParsedToCode(node.id)
         idsParsed.push(node.id)
     })

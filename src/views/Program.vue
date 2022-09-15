@@ -272,7 +272,7 @@ export default {
         if(isValidCode){
           nodes.filter(v => v.name !== "math-operation").forEach(node => {
             console.log(node);
-            code += generateCodeByNodeName(node, nodes, this.nodesParsedToCode, this.changeNodesParsedToCode)
+            code += generateCodeByNodeName(node, Object.values(data.drawflow.Home.data).sort((a, b) => a.pos_x - b.pos_x), this.nodesParsedToCode, this.changeNodesParsedToCode)
           })
           let validatedCode = validateTabsFromCode(code);
           this.changeCode(validatedCode)
