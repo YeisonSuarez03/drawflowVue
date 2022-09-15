@@ -56,6 +56,7 @@ const getMathOperationCode = (node, nodesParsedToCode, nodeList) => {
 
 const getAssignCode = (node, nodesParsedToCode, nodeList) => {
     console.log(node);
+    if (nodesParsedToCode.includes(node.id)) return "";
     const inputNodeCode = generateCodeByNodeName(nodeList.find(v => v.id == node.inputs["input_1"]?.connections[0]?.node), nodeList, nodesParsedToCode, null, true); 
     return `${node.data.name} = ${inputNodeCode}\n`;
 }
@@ -73,7 +74,7 @@ const getBlockNodes = (connectionsArray, nodeList) => {
     (v.pos_x >= startNode.pos_x && v.pos_x <= endNode.pos_x) && 
     ((v.pos_y >= startNode.pos_y-200 && v.pos_y <= startNode.pos_y+200) || 
     (v.pos_y >= endNode.pos_y-200 && v.pos_y <= endNode.pos_y+200)))
-    return nodesFromRectangle
+    return nodesFromRectangle.filter(v => v.name !== "math-operation")
 
 }
 
@@ -101,36 +102,67 @@ const getIfElseCode = (node, nodeList, nodesParsedToCode, changeNodesParsedToCod
     let code = `if ${inputNodes.join(operators[node.data.operator])} :\n`
     let blockNodesFirstOutput = getBlockNodes(node.outputs.output_1.connections, nodeList)
     console.log(blockNodesFirstOutput);
+    let idsParsed = []
     blockNodesFirstOutput.forEach(node => {
-        const inputNodeCode = generateCodeByNodeName(node, nodeList, nodesParsedToCode, changeNodesParsedToCode, true); 
+        const inputNodeCode = generateCodeByNodeName(node, nodeList, nodesParsedToCode, changeNodesParsedToCode, false); 
         code += "\t" + inputNodeCode
-        changeNodesParsedToCode(node.id)
+        idsParsed.push(node.id)
     })
+    idsParsed.forEach(changeNodesParsedToCode)
     let blockNodesSecondOutput = getBlockNodes(node.outputs.output_2.connections, nodeList)
     console.log(blockNodesSecondOutput);
     if (blockNodesSecondOutput?.length>0 ) {
         code += "\nelse : \n"
         blockNodesSecondOutput.forEach(node => {
-            const inputNodeCode = generateCodeByNodeName(node, nodeList, nodesParsedToCode, null, true); 
+            const inputNodeCode = generateCodeByNodeName(node, nodeList, nodesParsedToCode, changeNodesParsedToCode, false); 
             code += "\t" + inputNodeCode
-            changeNodesParsedToCode(node.id)
+            idsParsed.push(node.id)
         })
+        idsParsed.forEach(changeNodesParsedToCode)
     }
 
-    return code
+    return code + "\n"
 }
 
 const getForLoopCode = (node, nodeList, nodesParsedToCode, changeNodesParsedToCode) => {
     if (nodesParsedToCode.includes(node.id)) return "";
     let inputNodes = getInputNodes(node, nodeList);
-    let code = `for i in range (${inputNodes?.length > 0 && inputNodes[0] !== undefined ? inputNodes[0] : node.data.times}): \n\t`
+    let code = `for i in range (${inputNodes?.length > 0 && inputNodes[0] !== undefined ? inputNodes[0] : node.data.times}):\n`
     let blockNodesFirstOutput = getBlockNodes(node.outputs.output_1.connections, nodeList)
     console.log(blockNodesFirstOutput);
+    let idsParsed = []
     blockNodesFirstOutput.forEach(node => {
-        const inputNodeCode = generateCodeByNodeName(node, nodesParsedToCode, nodeList, changeNodesParsedToCode, true); 
+        const inputNodeCode = generateCodeByNodeName(node, nodesParsedToCode, nodeList, changeNodesParsedToCode, false); 
         code += "\t" + inputNodeCode
-        changeNodesParsedToCode(node.id)
+        // changeNodesParsedToCode(node.id)
+        idsParsed.push(node.id)
     })
+    idsParsed.forEach(changeNodesParsedToCode)
+    return code + "\n"
+}
 
-    return code
+export const validateTabsFromCode = (code) => {
+    let newCode = code
+    let lines = newCode?.split("\n")
+    lines.forEach((line, i) => {
+        if (i>0) {
+            let previousLine = lines[i-1];
+            let tabsCountPreviousLine = previousLine.split("\t").length-1 
+            let tabsCountCurrentLine = line.split("\t").length-1 
+            let tabsDifference = parseInt(tabsCountCurrentLine - tabsCountPreviousLine);
+            console.log("tabsCountPreviousLine: ", previousLine, tabsCountPreviousLine);
+            console.log("tabsCountCurrentLine: ", line, tabsCountCurrentLine);
+            console.log("tabsDifference: ", tabsDifference);
+            if(tabsDifference >= 2){ 
+                lines[i] = line.replace("\t", "");
+                console.log("we entered TABS DIFFERENCE IF: ", line, lines[i]);
+            }
+            if (line.split("").every(v => v==="\t") || line.split("").every(v => v==="\n") || line.split("").every(v => v==="")) {
+                console.log("line only has empty spaces: ", line);
+                lines.splice(i, 1);
+            }
+        }
+    })
+    console.log("we validate code the code: ", lines.join("\n"));
+    return lines.join("\n")
 }

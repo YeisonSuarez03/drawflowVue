@@ -118,7 +118,7 @@
 </template>
 
 <script>
-import { generateCodeByNodeName } from "@/helpers/generateCodeByNodeName";
+import { generateCodeByNodeName, validateTabsFromCode } from "@/helpers/generateCodeByNodeName";
 import { createStartAndEndNodes, deleteAllConnectedNodes } from "@/helpers/createOrDeleteStartEndNodes";
 import Drawflow from "drawflow";
 import Vue from 'vue';
@@ -274,7 +274,8 @@ export default {
             console.log(node);
             code += generateCodeByNodeName(node, nodes, this.nodesParsedToCode, this.changeNodesParsedToCode)
           })
-          this.changeCode(code)
+          let validatedCode = validateTabsFromCode(code);
+          this.changeCode(validatedCode)
         } 
       },
       positionMobile(ev){
